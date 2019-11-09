@@ -5,7 +5,7 @@ import org.junit.Test;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.Arrays;
+import java.util.*;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -15,13 +15,16 @@ import java.util.stream.Stream;
 public class StreamConstructor {
 
     /**
-     * 由数值直接构建流
+     * 由数值或对象直接构建流
      */
     @Test
     public void streamFromValue() {
-        Stream stream = Stream.of(1, 2, 3, 4, 5);
-
-        stream.forEach(System.out::println);
+        Stream stream1 = Stream.of(1, 2, 3, 4, 5);
+        Stream stream2 =Stream.of(90, -2L, 2d,"22",new Integer(8), new Date());
+//        Stream<Integer> stream3 =Stream.of(90, -2L, 2d,"22",new Integer(8), new Date());
+        stream1.forEach(System.out::println);
+        System.out.println("-------------");
+        stream2.forEach(System.out::println);
     }
 
     /**
@@ -30,7 +33,6 @@ public class StreamConstructor {
     @Test
     public void streamFromArray() {
         int[] numbers = {1, 2, 3, 4, 5};
-
         IntStream stream = Arrays.stream(numbers);
         stream.forEach(System.out::println);
     }
@@ -43,10 +45,8 @@ public class StreamConstructor {
     public void streamFromFile() throws IOException {
         // TODO 此处替换为本地文件的地址全路径
         String filePath = "";
-
         Stream<String> stream = Files.lines(
                 Paths.get(filePath));
-
         stream.forEach(System.out::println);
     }
 
@@ -62,6 +62,15 @@ public class StreamConstructor {
 
         stream.limit(100)
                 .forEach(System.out::println);
+
+    }
+
+    @Test
+    public void streamFromCollection(){
+        Set<String> set = new HashSet<>();
+        set.add("sdfsd");
+        set.add("ds");
+        set.stream();
 
     }
 
