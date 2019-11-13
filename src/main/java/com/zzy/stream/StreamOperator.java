@@ -1,6 +1,7 @@
 package com.zzy.stream;
 
 import com.alibaba.fastjson.JSON;
+import com.sun.org.apache.xerces.internal.util.SynchronizedSymbolTable;
 import com.zzy.sku.CartService;
 import com.zzy.sku.Sku;
 import com.zzy.sku.SkuCategoryEnum;
@@ -24,25 +25,45 @@ public class StreamOperator {
         list = CartService.getCartSkuList();
     }
 
+    @Test
+    public void all() {
+        list.stream()
+                .forEach(System.out::println);
+    }
+
     /**
      * 按照 skuId 从小到大排序
      * sorted 是串行操作
      */
     @Test
-    public void all(){
+    public void sortedAll() {
         list.stream()
+                .peek(sku -> System.out.println(sku.getSkuId()))
                 .sorted(Comparator.comparing(sku -> sku.getSkuId()))
-                .forEach(System.out::println);
+                .forEach(sku -> System.out.println("__" + sku.getSkuId() + "__"));
     }
 
     /**
      * filter使用：保留符合断言的元素
-     * 串行执行
+     * 并行操作
      */
     @Test
-    public void filterTest() {
+    public void filterTest1() {
         list.stream()
-                .filter(sku -> SkuCategoryEnum.BOOKS.equals(sku.getSkuCategory()))
+                .peek(sku -> System.out.println(sku.getSkuName()))
+                .filter(sku -> null != sku)
+                .forEach(sku -> System.out.println("__" + sku.getSkuName() + "__"));
+    }
+
+    /**
+     * filter使用：保留符合断言的元素
+     * 并行操作
+     */
+    @Test
+    public void filterTest2() {
+        list.stream()
+                .peek(sku -> System.out.println(sku.getSkuId()))
+                .filter(sku -> sku.getSkuCategory().equals(SkuCategoryEnum.BOOKS))
                 .forEach(System.out::println);
     }
 
@@ -54,7 +75,16 @@ public class StreamOperator {
     public void mapTest() {
         list.stream()
                 .peek(sku -> System.out.println(sku.getSkuName()))
-                .map(sku -> sku.getSkuName())
+                .map(sku -> "__" + sku.getSkuName() + "__")
+                .forEach(System.out::println);
+    }
+
+    @Test
+    public void mapTest1() {
+        list.stream()
+                .peek(sku -> System.out.println(sku.getSkuId()))
+//                .mapToDouble(sku -> sku.getSkuName())   //转换成错误的类型, 编译报错
+                .mapToDouble(sku -> sku.getSkuId())
                 .forEach(System.out::println);
     }
 
@@ -64,8 +94,10 @@ public class StreamOperator {
     @Test
     public void flatMapTest() {
         list.stream()
+                .peek(sku -> System.out.println())      //空输出, 只用作换行
+                .peek(sku -> System.out.println(sku.getSkuName()))
                 .flatMap(sku -> Arrays.stream(sku.getSkuName().split("")))
-                .forEach(System.out::println);
+                .forEach(ch -> System.out.print(ch + "\t"));
     }
 
     /**
@@ -74,7 +106,7 @@ public class StreamOperator {
     @Test
     public void peek() {
         list.stream()
-                .peek(sku -> System.out.println(sku.getSkuName()))
+                .peek(sku -> System.out.println(sku.getSkuName()))  //简单输出下元素, 但经过此操作, 流不会改变
                 .forEach(System.out::println);
     }
 
@@ -85,7 +117,22 @@ public class StreamOperator {
     public void sortTest() {
         list.stream()
                 .peek(sku -> System.out.println(sku.getSkuName()))
-                .sorted(Comparator.comparing(Sku::getTotalPrice))
+                .sorted(Comparator.comparing(Sku::getSkuId).reversed())
+                .forEach(System.out::println);
+    }
+
+    @Test
+    public void sortTest1() {
+        list.stream()
+                .map(sku -> sku.getSkuPrice())
+                .sorted()    // 等同于 sorted((c1, c2) -> c1.compareTo(c2))
+                .forEach(System.out::println);
+    }
+
+    @Test
+    public void sortTest2() {
+        list.stream()
+                .sorted()    // 等同于 sorted((c1, c2) -> c1.compareTo(c2))
                 .forEach(System.out::println);
     }
 
@@ -112,7 +159,7 @@ public class StreamOperator {
     }
 
     /**
-     * limit使用：截断前N条记录。有状态操作
+     * limit使用：截取前N条记录。有状态操作
      * 模拟分页效果
      */
     @Test
@@ -132,7 +179,6 @@ public class StreamOperator {
     public void allMatchTest() {
         boolean match = list.stream()
                 .peek(System.out::println)
-                // allMatch
                 .allMatch(sku -> sku.getTotalPrice() > 100);
         System.out.println(match);
     }
@@ -166,9 +212,9 @@ public class StreamOperator {
     public void findFirstTest() {
         Optional<Sku> optional = list.stream()
                 .peek(sku -> System.out.println(sku.getSkuName()))
+                .filter(sku -> sku.getTotalPrice() < 1000.0)
                 .findFirst();
-        System.out.println(
-                JSON.toJSONString(optional.get(), true));
+        System.out.println(optional.orElseGet(() ->new Sku()));
     }
 
     /**
@@ -177,14 +223,14 @@ public class StreamOperator {
     @Test
     public void findAnyTest() {
         Optional<Sku> optional = list.stream()
-                .peek(sku -> System.out.println(sku.getSkuName()))
+                .filter(sku -> sku.getTotalPrice() > 5000)
                 .findAny();
-        System.out.println(
-                JSON.toJSONString(optional.get(), true));
+        System.out.println(optional.orElseGet(() ->new Sku()));
     }
 
     /**
      * max使用：
+     * 非短路操作
      */
     @Test
     public void maxTest() {
@@ -196,6 +242,7 @@ public class StreamOperator {
 
     /**
      * min使用
+     * 非短路操作
      */
     @Test
     public void minTest() {
@@ -207,6 +254,7 @@ public class StreamOperator {
 
     /**
      * count使用
+     * 非短路操作
      */
     @Test
     public void countTest() {

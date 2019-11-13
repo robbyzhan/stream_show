@@ -37,6 +37,8 @@ public class Sku {
         this.skuCategory = skuCategory;
     }
 
+    public Sku(){}
+
     /**
      * Get方法
      * @return
