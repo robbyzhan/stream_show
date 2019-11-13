@@ -23,8 +23,8 @@ public class StreamCollector {
         List<Sku> result = list.stream()
                 .filter(sku -> sku.getTotalPrice() > 100)
                 .collect(Collectors.toList());
-        System.out.println(
-                JSON.toJSONString(result, true));
+        result.stream()
+                .forEach(System.out::println);
     }
 
     /**
@@ -33,15 +33,14 @@ public class StreamCollector {
     @Test
     public void group() {
         List<Sku> list = CartService.getCartSkuList();
-
-        // Map<分组条件，结果集合>
         Map<Object, List<Sku>> group = list.stream()
-                .collect(
-                        Collectors.groupingBy(
-                                sku -> sku.getSkuCategory()));
-
-        System.out.println(
-                JSON.toJSONString(group, true));
+                .collect(Collectors.groupingBy(
+                                sku -> sku.getSkuCategory()));  //以类别为条件, 为list分组
+        for(Map.Entry entry: group.entrySet()){
+            System.out.println(entry.getKey());
+            ((List)entry.getValue()).stream()
+                    .forEach(System.out::println);
+        }
     }
 
     /**
